@@ -1,37 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+おお〜 🎉 Cloud Run にデプロイ成功おめでとうございます！  
+次は **CI/CD (GitHub Actions → Cloud Run)** ですね。  
 
-## Getting Started
+たとえば GitHub Actions のワークフロー (`.github/workflows/deploy.yml`) を作ると、自動で Docker ビルド & Cloud Run デプロイが走るようにできます。  
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### ✅ GitHub Actions 用 `deploy.yml` サンプル
+
+```yaml
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main   # main ブランチに push されたら実行（適宜変更してください）
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker gcr.io --quiet
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE="gcr.io/${{ secrets.GCP_PROJECT_ID }}/nextjs-app:${{ github.sha }}"
+          gcloud builds submit --tag $IMAGE
+
+      - name: Deploy to Cloud Run
+        run: |
+          IMAGE="gcr.io/${{ secrets.GCP_PROJECT_ID }}/nextjs-app:${{ github.sha }}"
+          gcloud run deploy nextjs-app \
+            --image $IMAGE \
+            --region asia-northeast1 \
+            --platform managed \
+            --allow-unauthenticated
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ✅ 必要な設定
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **サービスアカウント作成**
+   - IAM & 管理 → サービスアカウントを作成
+   - 権限: `Cloud Run Admin`, `Storage Admin`, `Service Account User`
+   - キーを JSON で発行 → GitHub Secrets に登録
 
-## Learn More
+2. **GitHub Secrets 設定**
+   - `GCP_PROJECT_ID`: GCP プロジェクト ID  
+   - `GCP_SA_KEY`: 上の JSON キーの内容（そのままコピペ）
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 💡 ポイント
+- デプロイ先サービス名 (`nextjs-app`) は Cloud Run で指定したものに合わせてください。
+- ビルドに `gcloud builds submit` を使っているので、Artifact Registry/Container Registry 両方OK。  
+  （`docker build + docker push` に変えても可）
+- `github.sha` をタグにするとコミット単位で追跡できて便利です。  
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# nextapp
+---

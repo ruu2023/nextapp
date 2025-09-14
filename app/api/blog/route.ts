@@ -8,6 +8,7 @@ export async function GET( ) {
     return NextResponse.json({ message: "success", posts });
   } catch (err) {
     console.error(err);
+    console.log("DB URL:", process.env.DATABASE_URL);
     return NextResponse.json({ message: "error" }, { status: 500 });
   }
 }

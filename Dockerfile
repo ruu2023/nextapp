@@ -1,9 +1,14 @@
 # ビルドステージ
 FROM node:18-slim AS builder
+
+# OpenSSL をインストール
+RUN apt-get update -y && apt-get install -y openssl
+
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm install        # ← devDependencies もインストールする
+COPY prisma ./prisma
 
 COPY . .
 RUN npx prisma generate

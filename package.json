@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
@@ -11,6 +12,7 @@
   "dependencies": {
     "@prisma/client": "^6.16.1",
     "next": "15.5.3",
+    "prisma": "^6.16.1",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
@@ -22,7 +24,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
-    "prisma": "^6.16.1",
     "tailwindcss": "^4",
     "typescript": "^5.9.2"
   }

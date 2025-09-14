@@ -1,17 +1,19 @@
 # ビルドステージ
 FROM node:18-slim AS builder
 
-# OpenSSL をインストール
 RUN apt-get update -y && apt-get install -y openssl
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install        # ← devDependencies もインストールする
+RUN npm install
 COPY prisma ./prisma
-
 COPY . .
+
+# Prisma Client を生成
 RUN npx prisma generate
+
+# Next.js をビルド
 RUN npm run build
 
 # 実行ステージ
@@ -24,6 +26,10 @@ RUN npm install --only=production
 # ビルド成果物をコピー
 COPY --from=builder /app/.next .next
 COPY --from=builder /app/public public
+
+# Prisma Client をコピー
+COPY --from=builder /app/node_modules/.prisma node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma node_modules/@prisma
 
 ENV PORT=8080
 CMD ["npm", "run", "start", "--", "-p", "8080"]

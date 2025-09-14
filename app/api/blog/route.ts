@@ -13,7 +13,7 @@ export async function GET( ) {
 }
 
 // ブログ投稿用 api
-export async function POST(req: Request, res: NextResponse) {
+export async function POST(req: Request) {
   try {
     const {title, description} = await req.json();
 

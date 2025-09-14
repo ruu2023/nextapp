@@ -6,6 +6,7 @@ COPY package*.json ./
 RUN npm install        # ← devDependencies もインストールする
 
 COPY . .
+RUN npx prisma generate
 RUN npm run build
 
 # 実行ステージ

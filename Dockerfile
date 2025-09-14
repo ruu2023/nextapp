@@ -1,12 +1,14 @@
 # ビルドステージ
 FROM node:18-slim AS builder
-
 RUN apt-get update -y && apt-get install -y openssl
 
 WORKDIR /app
 
+# パッケージを先にコピーして install
 COPY package*.json ./
 RUN npm install
+
+# Prisma スキーマとソースをコピー
 COPY prisma ./prisma
 COPY . .
 
@@ -28,8 +30,8 @@ COPY --from=builder /app/.next .next
 COPY --from=builder /app/public public
 
 # Prisma Client をコピー
-COPY --from=builder /app/node_modules/.prisma node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma node_modules/@prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 ENV PORT=8080
 CMD ["npm", "run", "start", "--", "-p", "8080"]

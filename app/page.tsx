@@ -27,7 +27,7 @@ export default function Home() {
   const fetchPosts = async (): Promise<void> => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/blog');
+      const response = await fetch('/api/blog');
       const data = await response.json();
       // 配列だけ state にセット
       if (data.posts && Array.isArray(data.posts)) {
@@ -45,7 +45,7 @@ export default function Home() {
   // 記事を作成
   const createPost = async (postData: FormData): Promise<void> => {
     try {
-      const response = await fetch('http://localhost:3000/api/blog', {
+      const response = await fetch('/api/blog', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export default function Home() {
   // 記事を更新
   const updatePost = async (id: number, postData: FormData): Promise<void> => {
     try {
-      const response = await fetch(`http://localhost:3000/api/blog/${id}`, {
+      const response = await fetch(`/api/blog/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ export default function Home() {
   const deletePost = async (id: number): Promise<void> => {
     if (window.confirm('この記事を削除しますか？')) {
       try {
-        const response = await fetch(`http://localhost:3000/api/blog/${id}`, {
+        const response = await fetch(`/api/blog/${id}`, {
           method: 'DELETE',
         });
         if (response.ok) {

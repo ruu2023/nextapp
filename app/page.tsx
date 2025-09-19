@@ -141,6 +141,7 @@ export default function Home() {
             {showForm ? 'キャンセル' : '新規記事作成'}
           </button>
         </div>
+        変更
 
         {/* 記事作成・編集フォーム */}
         {showForm && (

@@ -20,3 +20,102 @@ model Post {
   description String
   date DateTime @default(now())
 }
+
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  projects  Project[]
+  tasks     Task[]
+  mainTasks MainTask[]
+  
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  color       String   @default("#3B82F6")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  mainTasks   MainTask[]
+  
+  @@map("projects")
+}
+
+model MainTask {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime // タイムライン上の開始時間
+  totalDuration Int    // 総予想時間（分）
+  color       String   @default("#10B981")
+  status      TaskStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  subTasks    SubTask[]
+  
+  @@map("main_tasks")
+}
+
+model SubTask {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  estimatedTime Int      // 予想時間（分）
+  actualTime    Int?     // 実際の時間（分）
+  order         Int      // メインタスク内での順序
+  status        TaskStatus @default(PENDING)
+  isInToday     Boolean  @default(false) // Today画面にあるかどうか
+  todayOrder    Int?     // Today画面での順序
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  mainTaskId    String
+  mainTask      MainTask @relation(fields: [mainTaskId], references: [id], onDelete: Cascade)
+  
+  // カット機能のための親子関係
+  parentId      String?
+  parent        SubTask? @relation("SubTaskCuts", fields: [parentId], references: [id])
+  cuts          SubTask[] @relation("SubTaskCuts")
+  
+  @@map("sub_tasks")
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  status      TaskStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}

@@ -23,10 +23,10 @@ const page = () => {
           </a>
 
           <a
-            href="/todo"
+            href="/timeline"
             className="group relative px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-out"
           >
-            <span className="relative z-10">🚀 Now Craft</span>
+            <span className="relative z-10">🚀 timeline</span>
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-700 to-teal-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </a>
         </div>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useRef } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
@@ -24,49 +24,52 @@ interface SubTask {
 }
 
 // タイムライン上のメインタスクコンポーネント
-const TimelineMainTask: React.FC<{ task: MainTask; onSubTaskCut: (subTaskId: string, cutTime: number) => void }> = ({ 
-  task, 
-  onSubTaskCut 
-}) => {
-  // const totalWidth = task.totalDuration * 2; // 1分 = 2px
-
+const TimelineMainTask: React.FC<{
+  task: MainTask;
+  onSubTaskCut: (subTaskId: string, cutTime: number) => void;
+}> = ({ task, onSubTaskCut }) => {
   return (
-    <div 
+    <div
       className="relative bg-white border-2 border-gray-300 rounded-lg shadow-md mb-4"
-      style={{ width: `100%`, minHeight: '120px' }}
+      style={{ width: `100%` }}
     >
       {/* メインタスクヘッダー */}
-      <div 
-        className="h-8 rounded-t-lg flex items-center px-3 text-white font-semibold text-sm"
+      <div
+        className="h-8 rounded-t-lg flex items-center px-3 text-white font-semibold text-sm flex justify-between"
         style={{ backgroundColor: task.color }}
       >
-        {task.title}
+        <p>{task.title}</p>
+        <p>{task.totalDuration}分</p>
       </div>
-      
+
       {/* サブタスクトラック */}
       <div className="p-2 space-y-1 flex">
-        {task.subTasks.map((subTask, index) => (
-          <SubTaskBlock 
-            key={subTask.id} 
-            subTask={subTask} 
-            onCut={onSubTaskCut}
-          />
-        ))}
+        {task.subTasks
+          .filter((st) => !st.isInToday)
+          .map((subTask, index) => (
+            <SubTaskBlock
+              key={subTask.id}
+              subTask={subTask}
+              onCut={onSubTaskCut}
+              totalDuration={task.totalDuration}
+            />
+          ))}
       </div>
     </div>
   );
 };
 
 // サブタスクブロックコンポーネント
-const SubTaskBlock: React.FC<{ 
-  subTask: SubTask; 
-  onCut: (subTaskId: string, cutTime: number) => void 
-}> = ({ subTask, onCut }) => {
+const SubTaskBlock: React.FC<{
+  subTask: SubTask;
+  onCut: (subTaskId: string, cutTime: number) => void;
+  totalDuration: number;
+}> = ({ subTask, onCut, totalDuration }) => {
   const [isDragging, setIsDragging] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
-  
-  const width = subTask.estimatedTime * 2; // 1分 = 2px
-  
+
+  const width = (subTask.estimatedTime / totalDuration) * 100;
+
   const [{ isDragging: dragState }, drag] = useDrag({
     type: 'subtask',
     item: { id: subTask.id, type: 'subtask' },
@@ -86,9 +89,12 @@ const SubTaskBlock: React.FC<{
 
   const getStatusColor = () => {
     switch (subTask.status) {
-      case 'COMPLETED': return 'bg-green-400';
-      case 'IN_PROGRESS': return 'bg-yellow-400';
-      default: return 'bg-blue-400';
+      case 'COMPLETED':
+        return 'bg-green-400';
+      case 'IN_PROGRESS':
+        return 'bg-yellow-400';
+      default:
+        return 'bg-blue-400';
     }
   };
 
@@ -101,21 +107,19 @@ const SubTaskBlock: React.FC<{
       className={`h-6 rounded cursor-pointer transition-opacity hover:opacity-80 ${getStatusColor()} ${
         dragState ? 'opacity-50' : ''
       }`}
-      style={{ width: `${width}px` }}
+      style={{ width: `${width}%` }}
       onDoubleClick={handleDoubleClick}
       title={`${subTask.title} (${subTask.estimatedTime}分)`}
     >
-      <div className="px-2 text-xs text-white truncate leading-6">
-        {subTask.title}
-      </div>
+      <div className="px-2 text-xs text-white truncate leading-6">{subTask.title}</div>
     </div>
   );
 };
 
 // Today画面のドロップゾーン
-const TodayDropZone: React.FC<{ 
-  todayTasks: SubTask[]; 
-  onDrop: (subTaskId: string) => void 
+const TodayDropZone: React.FC<{
+  todayTasks: SubTask[];
+  onDrop: (subTaskId: string) => void;
 }> = ({ todayTasks, onDrop }) => {
   const [{ isOver }, drop] = useDrop({
     accept: 'subtask',
@@ -139,10 +143,7 @@ const TodayDropZone: React.FC<{
       <h3 className="text-lg font-semibold mb-4 text-gray-700">Today</h3>
       <div className="space-y-2">
         {todayTasks.map((task) => (
-          <div
-            key={task.id}
-            className="p-3 bg-white rounded-lg shadow-sm border border-gray-200"
-          >
+          <div key={task.id} className="p-3 bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="flex justify-between items-center">
               <span className="font-medium">{task.title}</span>
               <span className="text-sm text-gray-500">{task.estimatedTime}分</span>
@@ -164,11 +165,57 @@ const TimelinePage: React.FC = () => {
       totalDuration: 480, // 8時間
       color: '#3B82F6',
       subTasks: [
-        { id: 's1', title: 'デザイン作成', estimatedTime: 120, order: 1, status: 'PENDING', isInToday: false },
-        { id: 's2', title: 'コーディング', estimatedTime: 240, order: 2, status: 'PENDING', isInToday: false },
-        { id: 's3', title: 'テスト', estimatedTime: 120, order: 3, status: 'PENDING', isInToday: false },
-      ]
-    }
+        {
+          id: 's1',
+          title: 'デザイン作成',
+          estimatedTime: 120,
+          order: 1,
+          status: 'PENDING',
+          isInToday: false,
+        },
+        {
+          id: 's2',
+          title: 'コーディング',
+          estimatedTime: 240,
+          order: 2,
+          status: 'PENDING',
+          isInToday: false,
+        },
+        {
+          id: 's3',
+          title: 'テスト',
+          estimatedTime: 120,
+          order: 3,
+          status: 'PENDING',
+          isInToday: false,
+        },
+      ],
+    },
+    {
+      id: '2',
+      title: '英語',
+      startTime: new Date(),
+      totalDuration: 200,
+      color: '#d5ab63ff',
+      subTasks: [
+        {
+          id: 's1',
+          title: '金の文法',
+          estimatedTime: 100,
+          order: 1,
+          status: 'IN_PROGRESS',
+          isInToday: false,
+        },
+        {
+          id: 's2',
+          title: 'やた単',
+          estimatedTime: 100,
+          order: 2,
+          status: 'IN_PROGRESS',
+          isInToday: false,
+        },
+      ],
+    },
   ]);
 
   const [todayTasks, setTodayTasks] = useState<SubTask[]>([]);
@@ -181,19 +228,21 @@ const TimelinePage: React.FC = () => {
 
   const handleDropToToday = (subTaskId: string) => {
     // サブタスクをToday画面に移動
-    const allSubTasks = mainTasks.flatMap(task => task.subTasks);
-    const subTask = allSubTasks.find(st => st.id === subTaskId);
-    
+    const allSubTasks = mainTasks.flatMap((task) => task.subTasks);
+    const subTask = allSubTasks.find((st) => st.id === subTaskId);
+
     if (subTask && !subTask.isInToday) {
-      setTodayTasks(prev => [...prev, { ...subTask, isInToday: true }]);
-      
+      setTodayTasks((prev) => [...prev, { ...subTask, isInToday: true }]);
+
       // メインタスクからisInTodayを更新
-      setMainTasks(prev => prev.map(mainTask => ({
-        ...mainTask,
-        subTasks: mainTask.subTasks.map(st => 
-          st.id === subTaskId ? { ...st, isInToday: true } : st
-        )
-      })));
+      setMainTasks((prev) =>
+        prev.map((mainTask) => ({
+          ...mainTask,
+          subTasks: mainTask.subTasks.map((st) =>
+            st.id === subTaskId ? { ...st, isInToday: true } : st
+          ),
+        }))
+      );
     }
   };
 
@@ -202,43 +251,27 @@ const TimelinePage: React.FC = () => {
       <div className="min-h-screen bg-gray-100 p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-800 mb-8">タスクタイムライン</h1>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* タイムライン部分 */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-700">プロジェクトタイムライン</h2>
-                
-                {/* 時間軸 */}
-                <div className="mb-4 border-b border-gray-200 pb-2">
-                  <div className="flex text-xs text-gray-500">
-                    {Array.from({ length: 13 }, (_, i) => (
-                      <div key={i} className="w-24 text-center">
-                        {i}:00
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
+                <h2 className="text-xl font-semibold mb-4 text-gray-700">
+                  プロジェクトタイムライン
+                </h2>
+
                 {/* メインタスク一覧 */}
                 <div className="space-y-4">
                   {mainTasks.map((task) => (
-                    <TimelineMainTask 
-                      key={task.id} 
-                      task={task} 
-                      onSubTaskCut={handleSubTaskCut}
-                    />
+                    <TimelineMainTask key={task.id} task={task} onSubTaskCut={handleSubTaskCut} />
                   ))}
                 </div>
               </div>
             </div>
-            
+
             {/* Today画面 */}
             <div className="lg:col-span-1">
-              <TodayDropZone 
-                todayTasks={todayTasks}
-                onDrop={handleDropToToday}
-              />
+              <TodayDropZone todayTasks={todayTasks} onDrop={handleDropToToday} />
             </div>
           </div>
         </div>

@@ -24,16 +24,68 @@ interface SubTask {
 }
 
 // タイムライン上のメインタスクコンポーネント
+// const TimelineMainTask: React.FC<{
+//   task: MainTask;
+//   onSubTaskCut: (subTaskId: string, cutTime: number) => void;
+// }> = ({ task, onSubTaskCut }) => {
+//   return (
+//     <div
+//       className="relative bg-white border-2 border-gray-300 rounded-lg shadow-md mb-4"
+//       style={{ width: `100%` }}
+//     >
+// {/* メインタスクヘッダー */}
+// <div
+//   className="h-8 rounded-t-lg flex items-center px-3 text-white font-semibold text-sm flex justify-between"
+//   style={{ backgroundColor: task.color }}
+// >
+//   <p>{task.title}</p>
+//   <p>{task.totalDuration}分</p>
+// </div>
+
+//       {/* サブタスクトラック */}
+//       <div className="p-2 space-y-1 flex">
+//         {task.subTasks
+//           .filter((st) => !st.isInToday)
+//           .map((subTask, index) => (
+//             <SubTaskBlock
+//               key={subTask.id}
+//               subTask={subTask}
+//               onCut={onSubTaskCut}
+//               totalDuration={task.totalDuration}
+//             />
+//           ))}
+//       </div>
+//     </div>
+//   );
+// };
+// タイムライン上のメインタスク
 const TimelineMainTask: React.FC<{
   task: MainTask;
   onSubTaskCut: (subTaskId: string, cutTime: number) => void;
-}> = ({ task, onSubTaskCut }) => {
+  onDropBack: (subTaskId: string, mainTaskId: string) => void; // 👈 追加
+}> = ({ task, onSubTaskCut, onDropBack }) => {
+  const [{ isOver }, drop] = useDrop({
+    accept: 'subtask',
+    drop: (item: { id: string; from?: string }) => {
+      if (item.from === 'today') {
+        onDropBack(item.id, task.id);
+      }
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  });
+  const dropRef = useRef<HTMLDivElement>(null);
+  drop(dropRef);
+
   return (
     <div
-      className="relative bg-white border-2 border-gray-300 rounded-lg shadow-md mb-4"
-      style={{ width: `100%` }}
+      ref={dropRef}
+      className={`relative bg-white border-2 rounded-lg shadow-md mb-4 transition-colors ${
+        isOver ? 'border-blue-500' : 'border-gray-300'
+      }`}
     >
-      {/* メインタスクヘッダー */}
+      {/* ヘッダー ... */}
       <div
         className="h-8 rounded-t-lg flex items-center px-3 text-white font-semibold text-sm flex justify-between"
         style={{ backgroundColor: task.color }}
@@ -41,12 +93,11 @@ const TimelineMainTask: React.FC<{
         <p>{task.title}</p>
         <p>{task.totalDuration}分</p>
       </div>
-
-      {/* サブタスクトラック */}
+      {/* サブタスク */}
       <div className="p-2 space-y-1 flex">
         {task.subTasks
           .filter((st) => !st.isInToday)
-          .map((subTask, index) => (
+          .map((subTask) => (
             <SubTaskBlock
               key={subTask.id}
               subTask={subTask}
@@ -117,6 +168,45 @@ const SubTaskBlock: React.FC<{
 };
 
 // Today画面のドロップゾーン
+// const TodayDropZone: React.FC<{
+//   todayTasks: SubTask[];
+//   onDrop: (subTaskId: string) => void;
+// }> = ({ todayTasks, onDrop }) => {
+//   const [{ isOver }, drop] = useDrop({
+//     accept: 'subtask',
+//     drop: (item: { id: string }) => {
+//       onDrop(item.id);
+//     },
+//     collect: (monitor) => ({
+//       isOver: monitor.isOver(),
+//     }),
+//   });
+//   const dropRef = useRef<HTMLDivElement>(null);
+//   drop(dropRef);
+
+//   return (
+//     <div
+//       ref={dropRef}
+//       className={`min-h-96 p-4 border-2 border-dashed rounded-lg transition-colors ${
+//         isOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50'
+//       }`}
+//     >
+//       <h3 className="text-lg font-semibold mb-4 text-gray-700">Today</h3>
+//       <div className="space-y-2">
+//         {todayTasks.map((task) => (
+//           <div key={task.id} className="p-3 bg-white rounded-lg shadow-sm border border-gray-200">
+//             <div className="flex justify-between items-center">
+//               <span className="font-medium">{task.title}</span>
+//               <span className="text-sm text-gray-500">{task.estimatedTime}分</span>
+//             </div>
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// };
+
+// Today画面のドロップゾーン
 const TodayDropZone: React.FC<{
   todayTasks: SubTask[];
   onDrop: (subTaskId: string) => void;
@@ -143,13 +233,33 @@ const TodayDropZone: React.FC<{
       <h3 className="text-lg font-semibold mb-4 text-gray-700">Today</h3>
       <div className="space-y-2">
         {todayTasks.map((task) => (
-          <div key={task.id} className="p-3 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="flex justify-between items-center">
-              <span className="font-medium">{task.title}</span>
-              <span className="text-sm text-gray-500">{task.estimatedTime}分</span>
-            </div>
-          </div>
+          <TodayTaskCard key={task.id} task={task} />
         ))}
+      </div>
+    </div>
+  );
+};
+
+// ✅ Todayタスクもドラッグ可能にする
+const TodayTaskCard: React.FC<{ task: SubTask }> = ({ task }) => {
+  const [{ isDragging }, drag] = useDrag({
+    type: 'subtask',
+    item: { id: task.id, from: 'today' },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  return (
+    <div
+      ref={drag}
+      className={`p-3 bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer ${
+        isDragging ? 'opacity-50' : ''
+      }`}
+    >
+      <div className="flex justify-between items-center">
+        <span className="font-medium">{task.title}</span>
+        <span className="text-sm text-gray-500">{task.estimatedTime}分</span>
       </div>
     </div>
   );
@@ -199,7 +309,7 @@ const TimelinePage: React.FC = () => {
       color: '#d5ab63ff',
       subTasks: [
         {
-          id: 's1',
+          id: 'c1',
           title: '金の文法',
           estimatedTime: 100,
           order: 1,
@@ -207,7 +317,7 @@ const TimelinePage: React.FC = () => {
           isInToday: false,
         },
         {
-          id: 's2',
+          id: 'c2',
           title: 'やた単',
           estimatedTime: 100,
           order: 2,
@@ -219,6 +329,23 @@ const TimelinePage: React.FC = () => {
   ]);
 
   const [todayTasks, setTodayTasks] = useState<SubTask[]>([]);
+
+  const handleDropBackToTimeline = (subTaskId: string, mainTaskId: string) => {
+    setTodayTasks((prev) => prev.filter((t) => t.id !== subTaskId));
+
+    setMainTasks((prev) =>
+      prev.map((task) =>
+        task.id === mainTaskId
+          ? {
+              ...task,
+              subTasks: task.subTasks.map((st) =>
+                st.id === subTaskId ? { ...st, isInToday: false } : st
+              ),
+            }
+          : task
+      )
+    );
+  };
 
   const handleSubTaskCut = (subTaskId: string, cutTime: number) => {
     // サブタスクをカットする処理
@@ -263,7 +390,12 @@ const TimelinePage: React.FC = () => {
                 {/* メインタスク一覧 */}
                 <div className="space-y-4">
                   {mainTasks.map((task) => (
-                    <TimelineMainTask key={task.id} task={task} onSubTaskCut={handleSubTaskCut} />
+                    <TimelineMainTask
+                      key={task.id}
+                      task={task}
+                      onSubTaskCut={handleSubTaskCut}
+                      onDropBack={handleDropBackToTimeline}
+                    />
                   ))}
                 </div>
               </div>

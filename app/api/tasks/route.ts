@@ -1,4 +1,3 @@
-
 // app/api/tasks/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
@@ -18,11 +17,11 @@ export async function GET(request: NextRequest) {
       where: { userId },
       include: {
         subTasks: {
-          orderBy: { order: 'asc' }
+          orderBy: { order: 'asc' },
         },
-        project: true
+        project: true,
       },
-      orderBy: { startTime: 'asc' }
+      orderBy: { startTime: 'asc' },
     });
 
     return NextResponse.json(mainTasks);
@@ -44,11 +43,11 @@ export async function POST(request: NextRequest) {
         startTime: new Date(startTime),
         totalDuration: 0,
         projectId,
-        userId
+        userId,
       },
       include: {
-        subTasks: true
-      }
+        subTasks: true,
+      },
     });
 
     return NextResponse.json(mainTask);

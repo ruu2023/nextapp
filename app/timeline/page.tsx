@@ -21,6 +21,8 @@ interface MainTask {
     title: string;
     color: string;
   };
+  avgDailyTime?: number; // 1日の平均所要時間（分）
+  dueDate?: string; // 期日
 }
 
 interface SubTask {
@@ -69,7 +71,9 @@ const TimelineMainTask: React.FC<{
         style={{ backgroundColor: task.color }}
       >
         <p>{task.title}</p>
-        <p>{task.totalDuration}分</p>
+        <p>{task.dueDate ? `期日: ${task.dueDate}` : ''}</p>
+        <p>{task.avgDailyTime ? `${task.avgDailyTime}分/日` : ''}</p>
+        <p>{task.totalDuration ? `${task.totalDuration}分` : ''}</p>
       </div>
       <div className="p-2 space-y-1 flex">
         {task.subTasks
@@ -238,9 +242,10 @@ const TimelinePage: React.FC = () => {
       const data = await response.json();
 
       // startTimeをDateオブジェクトに変換
-      const tasksWithDates = data.map((task: any) => ({
+      const tasksWithDates: MainTask[] = data.map((task: MainTask) => ({
         ...task,
         startTime: new Date(task.startTime),
+        dueDate: task.dueDate ? new Date(task.dueDate) : null,
       }));
 
       setMainTasks(tasksWithDates);
@@ -249,7 +254,7 @@ const TimelinePage: React.FC = () => {
       const todaySubTasks = tasksWithDates
         .flatMap((task: MainTask) => task.subTasks)
         .filter((subTask: SubTask) => subTask.isInToday)
-        .sort((a, b) => (a.todayOrder || 0) - (b.todayOrder || 0));
+        .sort((a: SubTask, b: SubTask) => (a.todayOrder || 0) - (b.todayOrder || 0));
 
       setTodayTasks(todaySubTasks);
     } catch (err) {
@@ -263,6 +268,7 @@ const TimelinePage: React.FC = () => {
   const createMainTask = async () => {
     try {
       const title = prompt('メインタスクのタイトルを入力してください:');
+      console.log('Creating main task with title:', title);
       if (!title) return;
 
       const response = await fetch('/api/tasks', {

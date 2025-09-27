@@ -1,9 +1,6 @@
-
 // app/api/subtasks/cut/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +9,7 @@ export async function POST(request: NextRequest) {
 
     // 元のサブタスクを取得
     const originalSubTask = await prisma.subTask.findUnique({
-      where: { id: subTaskId }
+      where: { id: subTaskId },
     });
 
     if (!originalSubTask) {
@@ -30,8 +27,8 @@ export async function POST(request: NextRequest) {
         where: { id: subTaskId },
         data: {
           estimatedTime: cutTime,
-          title: `${originalSubTask.title} (Part 1)`
-        }
+          title: `${originalSubTask.title} (Part 1)`,
+        },
       });
 
       // 新しいサブタスクを作成（カット後の部分）
@@ -42,8 +39,8 @@ export async function POST(request: NextRequest) {
           estimatedTime: originalSubTask.estimatedTime - cutTime,
           mainTaskId: originalSubTask.mainTaskId,
           order: originalSubTask.order + 0.5, // 順序を調整
-          parentId: subTaskId // 親子関係を設定
-        }
+          parentId: subTaskId, // 親子関係を設定
+        },
       });
 
       return { updatedOriginal, newSubTask };

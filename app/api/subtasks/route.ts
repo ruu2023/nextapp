@@ -1,9 +1,6 @@
-
 // app/api/subtasks/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,20 +13,20 @@ export async function POST(request: NextRequest) {
         description,
         estimatedTime,
         mainTaskId,
-        order
-      }
+        order,
+      },
     });
 
     // メインタスクの総時間を更新
     const allSubTasks = await prisma.subTask.findMany({
-      where: { mainTaskId }
+      where: { mainTaskId },
     });
 
     const totalDuration = allSubTasks.reduce((sum, task) => sum + task.estimatedTime, 0);
 
     await prisma.mainTask.update({
       where: { id: mainTaskId },
-      data: { totalDuration }
+      data: { totalDuration },
     });
 
     return NextResponse.json(subTask);
@@ -48,8 +45,8 @@ export async function PUT(request: NextRequest) {
       where: { id },
       data: {
         isInToday,
-        todayOrder
-      }
+        todayOrder,
+      },
     });
 
     return NextResponse.json(subTask);

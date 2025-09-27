@@ -59,7 +59,6 @@ model MainTask {
   startTime   DateTime // タイムライン上の開始時間
   totalDuration Int    // 総予想時間（分）
   dueDate     DateTime? // 期日
-  avgDailyTime Int?    // 1日の平均所要時間（分）
   color       String   @default("#10B981")
   status      TaskStatus @default(PENDING)
   createdAt   DateTime @default(now())

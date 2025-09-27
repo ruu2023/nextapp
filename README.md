@@ -1,8 +1,3 @@
-おお〜 🎉 Cloud Run にデプロイ成功おめでとうございます！  
-次は **CI/CD (GitHub Actions → Cloud Run)** ですね。  
-
-たとえば GitHub Actions のワークフロー (`.github/workflows/deploy.yml`) を作ると、自動で Docker ビルド & Cloud Run デプロイが走るようにできます。  
-
 ---
 
 ### ✅ GitHub Actions 用 `deploy.yml` サンプル
@@ -58,15 +53,27 @@ jobs:
    - キーを JSON で発行 → GitHub Secrets に登録
 
 2. **GitHub Secrets 設定**
-   - `GCP_PROJECT_ID`: GCP プロジェクト ID  
+   - `GCP_PROJECT_ID`: GCP プロジェクト ID
    - `GCP_SA_KEY`: 上の JSON キーの内容（そのままコピペ）
 
 ---
 
 ### 💡 ポイント
+
 - デプロイ先サービス名 (`nextjs-app`) は Cloud Run で指定したものに合わせてください。
 - ビルドに `gcloud builds submit` を使っているので、Artifact Registry/Container Registry 両方OK。  
   （`docker build + docker push` に変えても可）
-- `github.sha` をタグにするとコミット単位で追跡できて便利です。  
+- `github.sha` をタグにするとコミット単位で追跡できて便利です。
 
 ---
+
+---
+
+### task app 進捗
+
+次にやること
+
+- avgDailyTime を計算して出す。
+- client と分ける
+- タスクの完了機能（未完了タスクをグレー、完了タスクを青）
+- タスク詳細、タスクの分割と時間を変更（一括の管理画面ではなく、一個一個の画面を用意する感じ。分割はワンクリックでコピーして時間を半分にする。）

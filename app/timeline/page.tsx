@@ -21,9 +21,15 @@ interface MainTask {
     title: string;
     color: string;
   };
-  avgDailyTime?: number; // 1日の平均所要時間（分）
   dueDate?: string; // 期日
 }
+
+type MainTaskExtended = MainTask & {
+  startTime: Date;
+  dueDate: Date | null;
+  remainingDays?: number; // 期日までの残り日数
+  avgDailyTime?: number; // 1日あたりの必要時間（分）
+};
 
 interface SubTask {
   id: string;
@@ -40,7 +46,7 @@ interface SubTask {
 
 // タイムライン上のメインタスク
 const TimelineMainTask: React.FC<{
-  task: MainTask;
+  task: MainTaskExtended;
   onSubTaskCut: (subTaskId: string, cutTime: number) => void;
   onDropBack: (subTaskId: string, mainTaskId: string) => void;
   onAddSubTask: (mainTaskId: string) => void;
@@ -71,7 +77,10 @@ const TimelineMainTask: React.FC<{
         style={{ backgroundColor: task.color }}
       >
         <p>{task.title}</p>
-        <p>{task.dueDate ? `期日: ${task.dueDate}` : ''}</p>
+        <p>
+          {task.dueDate ? `期日: ${task.dueDate.getMonth() + 1}/${task.dueDate.getDate()}` : ''}
+        </p>
+        <p>{task.remainingDays ? `残り ${task.remainingDays}日` : ''}</p>
         <p>{task.avgDailyTime ? `${task.avgDailyTime}分/日` : ''}</p>
         <p>{task.totalDuration ? `${task.totalDuration}分` : ''}</p>
       </div>
@@ -216,7 +225,7 @@ const TodayTaskCard: React.FC<{ task: SubTask }> = ({ task }) => {
 
 // メインのタイムラインページコンポーネント
 const TimelinePage: React.FC = () => {
-  const [mainTasks, setMainTasks] = useState<MainTask[]>([]);
+  const [mainTasks, setMainTasks] = useState<MainTaskExtended[]>([]);
   const [todayTasks, setTodayTasks] = useState<SubTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -242,10 +251,11 @@ const TimelinePage: React.FC = () => {
       const data = await response.json();
 
       // startTimeをDateオブジェクトに変換
-      const tasksWithDates: MainTask[] = data.map((task: MainTask) => ({
+      const tasksWithDates: MainTaskExtended[] = data.map((task: MainTask) => ({
         ...task,
         startTime: new Date(task.startTime),
         dueDate: task.dueDate ? new Date(task.dueDate) : null,
+        remainingDays: getRemainingDays(task.dueDate),
       }));
 
       setMainTasks(tasksWithDates);
@@ -262,6 +272,16 @@ const TimelinePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getRemainingDays = (dueDate: string | undefined): number | undefined => {
+    if (!dueDate) return undefined;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDateObj = new Date(dueDate);
+    dueDateObj.setHours(0, 0, 0, 0);
+    const diffTime = dueDateObj.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
   // メインタスク作成
